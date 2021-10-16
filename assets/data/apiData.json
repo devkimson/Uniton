@@ -1,0 +1,14 @@
+{
+    "apiVersion": "v0.1.0-alpha",
+    "title": "Uniton",
+    "baseurl":"",
+    "author": {
+        "kimson": {
+            "name": "kimson",
+            "github": "https://github.com/kkn1125",
+            "blog": "https://kkn1125.github.io/",
+            "email": "chaplet01@gmail.com"
+        }
+    },
+    "since": "2021-10-16"
+}
