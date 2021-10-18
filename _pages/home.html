@@ -1,1 +1,19 @@
-<div>test</div>
+<u-for var="test" target="[1,2,3,4,5,'tom']">
+    <div>
+        ${test}
+    </div>
+    <div>
+        If you want to add a link when tom is printed, you can nest u-if statements.
+        <u-if test="${test=='tom'}">
+            <a href="/test">testLink</a>
+        </u-if>
+    </div>
+    <div>
+        This will be repeated 6 times, and the array can be retrieved one by one with the name test.
+    </div>
+</u-for>
+<u-if test="3>2">
+    <u-for var="a" target="3">
+        ${a}
+    </u-for>
+</u-if>
