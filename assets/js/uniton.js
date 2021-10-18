@@ -200,10 +200,9 @@ const Uniton = (function () {
 
     function Component() {
         const tagNames = ["u-if", "u-for", "u-else", "u-elif"];
-        let moduleView = null;
 
         this.init = function (view) {
-            moduleView = view;
+            
         }
 
         this.requireComponent = function (ev) {
@@ -364,14 +363,12 @@ const Uniton = (function () {
             const head = document.head;
             const body = document.body;
             const ubody = document.querySelector('[data-uniton-type="body"]');
-            // const anchor = document.querySelectorAll('a[href]');
 
             const ui = {
                 html,
                 head,
                 body,
                 ubody,
-                // anchor,
             };
 
             const view = new View();
@@ -388,7 +385,7 @@ const Uniton = (function () {
             }
 
             view.init(ui);
-            component.init(view);
+            component.init();
             exception.init(view);
             templator.init(exception, options);
             controller.init(packages);
