@@ -20,11 +20,15 @@ const Uniton = (function () {
             moduleOptions = options;
             uiElem = ui;
             window.addEventListener('load', (ev) => {
-                options.template.privateComponent ? this.requireComponent(ev) : null;
+                options.unitonComponent ? this.requireComponent(ev) : null;
                 this.requestTemplates(ev);
-                moduleTemplator.requestPageHandler();
+                if(moduleOptions.unitonAnchor){
+                    moduleTemplator.requestPageHandler();
+                }
             });
-            uiElem.body.addEventListener('click', this.requestPageHandler);
+            if(moduleOptions.unitonAnchor){
+                uiElem.body.addEventListener('click', this.requestPageHandler);
+            }
         }
 
         this.requireComponent = function (ev) {
@@ -35,7 +39,7 @@ const Uniton = (function () {
             moduleTemplator.requestTemplates(ev);
         }
 
-        this.requestPageHandler = function(ev){
+        this.requestPageHandler = function (ev) {
             moduleTemplator.requestPageHandler(ev);
         }
     }
@@ -52,10 +56,10 @@ const Uniton = (function () {
             this.requestApiContext(moduleOptions.apiDataPath, true);
         }
 
-        this.scanLocalFolderPost = function(){
+        this.scanLocalFolderPost = function () {
             const localFile = this.requestLocalFile(moduleOptions.postpath).body.querySelector('#files').children;
             let [remove, ...postBundle] = [...localFile];
-            const postMapping = post=>{
+            const postMapping = post => {
                 return {
                     title: post.title,
                     href: post.href,
@@ -64,36 +68,49 @@ const Uniton = (function () {
                     date: post.date,
                 }
             }
-            postBundle.forEach(post=>{
-                let {title, href} = post.children[0];
+            postBundle.forEach(post => {
+                let {
+                    title,
+                    href
+                } = post.children[0];
                 let [name, size, date] = [...post.children[0].children]
                 name = name.textContent;
                 size = size.textContent;
                 date = date.textContent;
-                PostList.push(postMapping({title, href, name, size, date}));
+                PostList.push(postMapping({
+                    title,
+                    href,
+                    name,
+                    size,
+                    date
+                }));
             });
         }
 
-        this.requestPageHandler = function(ev){
-            if(!ev){
-                window.history.pushState({data:1}, '', location.pathname);
+        this.requestPageHandler = function (ev) {
+            if (!ev) {
+                window.history.pushState({
+                    data: 1
+                }, '', location.pathname);
                 this.changeViewPage(location.pathname);
             } else {
                 let target = ev.target;
                 ev.preventDefault();
-                if(target.tagName !== 'A' || !target.getAttribute("href")) return;
+                if (target.tagName !== 'A' || !target.getAttribute("href")) return;
                 let mappingPath = target.href.split(target.host)[1];
-                window.history.pushState({data:1},'',mappingPath);
+                window.history.pushState({
+                    data: 1
+                }, '', mappingPath);
                 this.changeViewPage(mappingPath);
             }
         }
 
-        this.changeViewPage = function(url){
+        this.changeViewPage = function (url) {
             const home = `${API.baseurl}/home`;
-            if(url == '/index') url = home;
-            if(url == '/home') url = home;
-            if(url == '/') url = home;
-            if(url == '') url = home;
+            if (url == '/index') url = home;
+            if (url == '/home') url = home;
+            if (url == '/') url = home;
+            if (url == '') url = home;
             const rootpath = `${location.protocol}//${location.host}${API.baseurl}`;
             let requestBody = this.requestLocalFile(`${rootpath}/_pages${url}.html`).body.innerHTML;
             let parsedElement = this.unitonParser(requestBody);
@@ -114,7 +131,7 @@ const Uniton = (function () {
                             documents = dom.parseFromString(xhr.responseText, "text/html");
                         }
                     }
-                } 
+                }
             });
             xhr.open('get', url, async);
             xhr.send();
@@ -137,7 +154,11 @@ const Uniton = (function () {
                     }
                 }
             });
-            xhr.open("get", "_templates/layout.html", false);
+            let target = "_templates/layout.html";
+            if(!moduleOptions.unitonTemplate){
+                target = location.pathname;
+            }
+            xhr.open("get", target, false);
             xhr.send();
         }
 
@@ -149,13 +170,13 @@ const Uniton = (function () {
         this.drawHeadWithValidate = function (head) {
             let parsingHtmlHead = this.parseElementsToString(head.innerHTML);
             let parsingElement = this.convertHtmlStringToElements(parsingHtmlHead);
-            moduleException.drawHeadWithValidate([...parsingElement]);
+            moduleException.drawHeadWithValidate([...parsingElement], moduleOptions.unitonTemplate);
         }
 
         this.drawBodyWithValidate = function (body) {
             let parsingHtmlBody = this.parseElementsToString(body.innerHTML);
             let parsingElement = this.convertHtmlStringToElements(parsingHtmlBody);
-            moduleException.drawBodyWithValidate([...parsingElement]);
+            moduleException.drawBodyWithValidate([...parsingElement], moduleOptions.unitonTemplate);
         }
 
         this.parseElementsToString = function (element) {
@@ -202,7 +223,7 @@ const Uniton = (function () {
         const tagNames = ["u-if", "u-for", "u-else", "u-elif"];
 
         this.init = function (view) {
-            
+
         }
 
         this.requireComponent = function (ev) {
@@ -233,19 +254,19 @@ const Uniton = (function () {
                     connectedCallback() {
                         if (this.isConnected) {
                             if (this.tagName == "U-IF") {
-                                if(this.getAttribute("test").length==0){
-                                    console.error('[No Test Regex.')
+                                if (this.getAttribute("test").length == 0) {
+                                    console.error('[NoTestDataException] Please enter a value for the "test" attribute.')
                                 } else {
                                     root.unitonIf(this);
                                 }
                             } else if (this.tagName == "U-FOR") {
-                                if(this.getAttribute("var") && this.getAttribute("target")){
+                                if (this.getAttribute("var") && this.getAttribute("target")) {
                                     root.unitonFor(this);
-                                } else if(!this.getAttribute("var") && !this.getAttribute("target")){
+                                } else if (!this.getAttribute("var") && !this.getAttribute("target")) {
                                     console.error('[NoDataException] Set the variable and target.')
-                                } else if(!this.getAttribute("var")){
+                                } else if (!this.getAttribute("var")) {
                                     console.error('[NoVarDataException] Set the variable.')
-                                } else if(!this.getAttribute("target")){
+                                } else if (!this.getAttribute("target")) {
                                     console.error('[NoTargetDataException] Set the target.')
                                 }
                             }
@@ -286,23 +307,28 @@ const Uniton = (function () {
                 this.type = exceptionType[type];
                 this.name = this.type.name;
                 this.message = this.type.message;
-                this.alertException = function(){
+                this.alertException = function () {
                     console.error(`[${this.name}] ${this.message} at ${info}`);
                 };
             }
             Exceptions = Exception;
         }
 
-        this.drawUnitonBody = function(elements){
+        this.drawUnitonBody = function (elements) {
             moduleView.drawUnitonBody(elements);
         }
 
-        this.drawHeadWithValidate = function (heads) {
-            moduleView.drawFilteredElementsToHead(heads);
+        this.drawHeadWithValidate = function (heads, useTemplate) {
+            moduleView.drawFilteredElementsToHead(heads, useTemplate);
         }
 
-        this.drawBodyWithValidate = function (elements) {
-            let filteredElements = elements.filter(elem => elem.nodeValue || elem.innerHTML.indexOf('CDATA') == -1).map(elem => {
+        this.drawBodyWithValidate = function (elements, useTemplate) {
+            let filteredElements = elements.filter(x=>{
+                if(!(x instanceof Text)){
+                    return x;
+                }
+            });
+            filteredElements = filteredElements.filter(elem => elem.nodeValue || elem.innerHTML.indexOf('CDATA') == -1).map(elem => {
                 if (elem.tagName == 'SCRIPT') {
                     let s = document.createElement('script');
                     if (elem.innerHTML.trim() == '') {
@@ -317,10 +343,10 @@ const Uniton = (function () {
                     return elem;
                 }
             });
-            filteredElements = filteredElements.filter(elem=> {
-                if(elem.nodeValue){
-                    if(elem instanceof Comment){
-                        if(elem.nodeValue.indexOf('live-server')==-1){
+            filteredElements = filteredElements.filter(elem => {
+                if (elem.nodeValue) {
+                    if (elem instanceof Comment) {
+                        if (elem.nodeValue.indexOf('live-server') == -1) {
                             return elem;
                         }
                     } else {
@@ -330,7 +356,7 @@ const Uniton = (function () {
                     return elem;
                 }
             });
-            moduleView.drawFilteredElementsToBody(filteredElements);
+            moduleView.drawFilteredElementsToBody(filteredElements, useTemplate);
         }
     }
 
@@ -341,29 +367,49 @@ const Uniton = (function () {
             uiElem = ui;
         }
 
-        this.drawUnitonBody = function(elements){
-            uiElem.ubody.innerHTML = '';
-            uiElem.ubody.append(...elements);
+        this.drawUnitonBody = function (elements) {
+            if (uiElem.ubody) {
+                uiElem.ubody.innerHTML = '';
+                uiElem.ubody.append(...elements);
+            }
         }
 
         this.drawFilteredElementsToHead = function (elements) {
             uiElem.head.prepend(...elements);
         }
-        this.drawFilteredElementsToBody = function (elements) {
+        this.drawFilteredElementsToBody = function (elements, useTemplate) {
+            uiElem.body.innerHTML = '';
+            elements = elements.filter(elem=> {
+                if(elem.tagName=='SCRIPT'){
+                    if(!elem.src.match(/index.js|uniton.js/gm)){
+                        return elem;
+                    }
+                } else {
+                    return elem;
+                }
+            });
             uiElem.body.prepend(...elements);
+            if(!useTemplate){
+                uiElem.body.innerHTML += '';
+            }
+            
             uiElem.ubody = document.querySelector('[data-uniton-type="body"]');
-            uiElem.html.style.display = 'block';
+            uiElem.html.removeAttribute("style");
         }
     }
 
     return {
         init: function (options) {
+            !options.hasOwnProperty('unitonTemplate')?options.unitonTemplate = false:null;
+            !options.hasOwnProperty('unitonComponent')?options.unitonComponent = true:null;
+            !options.hasOwnProperty('unitonAnchor')?options.unitonAnchor = false:null;
+            
             const html = document.querySelector('html');
             html.style.display = 'none';
             const head = document.head;
             const body = document.body;
             const ubody = document.querySelector('[data-uniton-type="body"]');
-
+            
             const ui = {
                 html,
                 head,

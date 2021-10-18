@@ -43,15 +43,15 @@ If you want to use it as a cdn, you can copy and use the following.
 
 ```html
 <!-- ... -->
-<script src="https://cdn.jsdelivr.net/gh/devkimson/Uniton@0.1.2/assets/js/uniton.js" integrity="sha384-L+M/ngnqh/5GSv5qOsZ+Uvyr/EzuvygadQMH5cVE70uDq/2zgJu4BhsmbVCaxhOK" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/devkimson/Uniton@0.1.2/assets/js/uniton.js" integrity="sha384-L+M/ngnqh/5GSv5qOsZ+Uvyr/EzuvygadQMH5cVE70uDq/2zgJu4BhsmbVCaxhOK" crossorigin="anonymous"></script>
 <script>
     const uniton = Uniton.init({
         // Into Custom Options...
         apiDataPath: "apiData.json",
         postpath: "_posts",
-        template: {
-            privateComponent: true,
-        }
+        unitonTemplate: true,
+        unitonAnchor: false,
+        unitonComponent: true,
     });
 </script>
 <!-- ... -->
@@ -101,8 +101,9 @@ Currently available options are apiDataPath, postpath, and privateComponent of t
 |---|---|---|---|
 |1|apiDataPath|Contains information about the target being operated. If you are creating a blog, you just need to write the blog information.|json file path|
 |2|postpath|It is the path of the folder from which the text is to be read. In our example, we entered a path called _posts. All files in the _posts folder are read. (can't read child folder)|posts path name|
-|3|template|control templates|-|
-| |privateComponent|The use of u-* tags, which are uniton components, is prohibited.|true \| false|
+|3|unitonComponent|The use of u-* tags, which are uniton components, is prohibited.|true (default) \| false|
+|4|unitonAnchor|Coordinates linking in a "Uniton" way.|true\| false (default)|
+|5|unitonTemplate|Set whether to use templates.|true \| false (default)|
 
 ### Components Usage
 
