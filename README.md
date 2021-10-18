@@ -11,7 +11,7 @@ Implemented if and for statements with html tags, and made it possible to use te
 
 ## Usage
 
-### Script Usage
+### Script Usage & CDN
 
 ```html
 <!DOCTYPE html>
@@ -38,6 +38,58 @@ Implemented if and for statements with html tags, and made it possible to use te
 
 </html>
 ```
+
+If you want to use it as a cdn, you can copy and use the following.
+
+```html
+<!-- ... -->
+<script src="https://cdn.jsdelivr.net/gh/devkimson/Uniton@0.1.2/assets/js/uniton.js" integrity="sha384-L+M/ngnqh/5GSv5qOsZ+Uvyr/EzuvygadQMH5cVE70uDq/2zgJu4BhsmbVCaxhOK" crossorigin="anonymous"></script>
+<script>
+    const uniton = Uniton.init({
+        // Into Custom Options...
+        apiDataPath: "apiData.json",
+        postpath: "_posts",
+        template: {
+            privateComponent: true,
+        }
+    });
+</script>
+<!-- ... -->
+```
+
+If you use cdn, there should be apiData.json and _includs, _pages, _posts, _templates folders, and layout.html in _templates folder.
+
+index.html is the driving part, and layout.html is the template.
+
+```html
+<!-- layout.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- your css or meta -->
+    <title>Document</title>
+</head>
+<body>
+
+    <!-- Module Page -->
+    <div data-uniton-type="body">
+        <!-- 
+            Here, the pages in the _posts folder will appear according to the path.
+    
+            The path mapping refers to the files in the _posts folder. If the path is /home, the home.html file is displayed, and if the path is /album, the album.html file appears where the data attribute uniton-type="body" is.
+        -->
+    </div>
+    <!-- Module Page -->
+
+    <!-- your scripts -->
+</body>
+</html>
+```
+
+Paste the html file of the include as `{#insert _includes/nav.html#}`.
 
 ### Options Usage
 
