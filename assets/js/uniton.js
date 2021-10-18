@@ -8,16 +8,23 @@ const Uniton = (function () {
         let moduleComponent = null;
         let moduleOptions = null;
         let uiElem = null;
-        
-        this.init = function ({component, templator, ui, options}) {
+
+        this.init = function ({
+            component,
+            templator,
+            ui,
+            options
+        }) {
             moduleTemplator = templator;
             moduleComponent = component;
             moduleOptions = options;
             uiElem = ui;
             window.addEventListener('load', (ev) => {
-                options.template.privateComponent?this.requireComponent(ev):null;
+                options.template.privateComponent ? this.requireComponent(ev) : null;
                 this.requestTemplates(ev);
+                moduleTemplator.requestPageHandler();
             });
+            uiElem.body.addEventListener('click', this.requestPageHandler);
         }
 
         this.requireComponent = function (ev) {
@@ -26,6 +33,10 @@ const Uniton = (function () {
 
         this.requestTemplates = function (ev) {
             moduleTemplator.requestTemplates(ev);
+        }
+
+        this.requestPageHandler = function(ev){
+            moduleTemplator.requestPageHandler(ev);
         }
     }
 
@@ -36,24 +47,78 @@ const Uniton = (function () {
         this.init = function (exception, options) {
             moduleException = exception;
             moduleOptions = options;
-
+            window.PostList = [];
+            this.scanLocalFolderPost();
             this.requestApiContext(moduleOptions.apiDataPath, true);
         }
 
-        this.requestLocalFile = function(url, async = false){
+        this.scanLocalFolderPost = function(){
+            const localFile = this.requestLocalFile(moduleOptions.postpath).body.querySelector('#files').children;
+            let [remove, ...postBundle] = [...localFile];
+            const postMapping = post=>{
+                return {
+                    title: post.title,
+                    href: post.href,
+                    name: post.name,
+                    size: post.size,
+                    date: post.date,
+                }
+            }
+            postBundle.forEach(post=>{
+                let {title, href} = post.children[0];
+                let [name, size, date] = [...post.children[0].children]
+                name = name.textContent;
+                size = size.textContent;
+                date = date.textContent;
+                PostList.push(postMapping({title, href, name, size, date}));
+            });
+        }
+
+        this.requestPageHandler = function(ev){
+            if(!ev){
+                window.history.pushState({data:1}, '', location.pathname);
+                this.changeViewPage(location.pathname);
+            } else {
+                let target = ev.target;
+                ev.preventDefault();
+                if(target.tagName !== 'A' || !target.getAttribute("href")) return;
+                let mappingPath = target.href.split(target.host)[1];
+                window.history.pushState({data:1},'',mappingPath);
+                this.changeViewPage(mappingPath);
+            }
+        }
+
+        this.changeViewPage = function(url){
+            const home = `${API.baseurl}/home`;
+            if(url == '/index') url = home;
+            if(url == '/home') url = home;
+            if(url == '/') url = home;
+            if(url == '') url = home;
+            const rootpath = `${location.protocol}//${location.host}${API.baseurl}`;
+            let requestBody = this.requestLocalFile(`${rootpath}/_pages${url}.html`).body.innerHTML;
+            let parsedElement = this.unitonParser(requestBody);
+            let elements = this.convertHtmlStringToElements(parsedElement);
+            moduleException.drawUnitonBody(elements);
+        }
+
+        this.requestLocalFile = function (url, async = false) {
             let xhr = new XMLHttpRequest();
+            let documents;
             xhr.addEventListener('readystatechange', (ev) => {
                 if (xhr.status == 200 || xhr.status == 201) {
                     if (xhr.readyState == 4) {
-                        if(async)
+                        if (async)
                             window.API = JSON.parse(xhr.responseText);
-                        else
-                            return xhr.responseText;
+                        else {
+                            let dom = new DOMParser();
+                            documents = dom.parseFromString(xhr.responseText, "text/html");
+                        }
                     }
-                }
+                } 
             });
             xhr.open('get', url, async);
             xhr.send();
+            return documents;
         }
 
         this.requestApiContext = function (url, async) {
@@ -76,18 +141,18 @@ const Uniton = (function () {
             xhr.send();
         }
 
-        this.drawHandler = function(documents){
+        this.drawHandler = function (documents) {
             this.drawHeadWithValidate(documents.head);
             this.drawBodyWithValidate(documents.body);
         }
 
-        this.drawHeadWithValidate = function(head){
+        this.drawHeadWithValidate = function (head) {
             let parsingHtmlHead = this.parseElementsToString(head.innerHTML);
             let parsingElement = this.convertHtmlStringToElements(parsingHtmlHead);
             moduleException.drawHeadWithValidate([...parsingElement]);
         }
-        
-        this.drawBodyWithValidate = function(body){
+
+        this.drawBodyWithValidate = function (body) {
             let parsingHtmlBody = this.parseElementsToString(body.innerHTML);
             let parsingElement = this.convertHtmlStringToElements(parsingHtmlBody);
             moduleException.drawBodyWithValidate([...parsingElement]);
@@ -100,10 +165,10 @@ const Uniton = (function () {
         this.convertHtmlStringToElements = function (htmlString) {
             let dom = new DOMParser();
             let documents = dom.parseFromString(htmlString, "text/html");
-            if(documents.head.children.length==0){
-                return documents.body.children;
+            if (documents.head.children.length == 0) {
+                return documents.body.childNodes;
             } else {
-                return documents.head.children;
+                return documents.head.childNodes;
             }
         }
 
@@ -112,10 +177,13 @@ const Uniton = (function () {
             tmp = responseText.replace(/\{\#\s*[\s\S]+?\n*\s*\#\}/gim, e => {
                 let commend = e.replace(/\{\#|\#\}/gm, '').trim();
                 if (commend.includes('insert')) {
-                    return this.requestLocalFile(commend.split('insert ')[1]);
+                    let documents = this.requestLocalFile(commend.split('insert ')[1]);
+                    return documents.body.innerHTML;
                 } else if (commend.trim() == 'API.url') {
                     if (API.url == "") return location.protocol + '//' + location.host + (API.baseurl != '' ? API.baseurl : '/');
                     else return this.evl(`${commend}`);
+                } else if (commend.trim() == 'set body') {
+                    return `uniton-body`;
                 } else {
                     return this.evl(`${commend}`);
                 }
@@ -166,9 +234,21 @@ const Uniton = (function () {
                     connectedCallback() {
                         if (this.isConnected) {
                             if (this.tagName == "U-IF") {
-                                root.unitonIf(this);
+                                if(this.getAttribute("test").length==0){
+                                    console.error('[No Test Regex.')
+                                } else {
+                                    root.unitonIf(this);
+                                }
                             } else if (this.tagName == "U-FOR") {
-                                root.unitonFor(this);
+                                if(this.getAttribute("var") && this.getAttribute("target")){
+                                    root.unitonFor(this);
+                                } else if(!this.getAttribute("var") && !this.getAttribute("target")){
+                                    console.error('[NoDataException] Set the variable and target.')
+                                } else if(!this.getAttribute("var")){
+                                    console.error('[NoVarDataException] Set the variable.')
+                                } else if(!this.getAttribute("target")){
+                                    console.error('[NoTargetDataException] Set the target.')
+                                }
                             }
                         }
                     }
@@ -180,32 +260,77 @@ const Uniton = (function () {
 
     function Exception() {
         let moduleView = null;
+        let Exceptions = null;
 
         this.init = function (view) {
             moduleView = view;
+            this.exceptionGenerator();
         }
 
-        this.drawHeadWithValidate = function(heads){
+        this.exceptionGenerator = function () {
+            const exceptionType = {
+                Numeric: {
+                    name: "NumericException",
+                    message: "Wrong number input or out of range!",
+                },
+                LocalFile: {
+                    name: "LocalFileNotFoudException",
+                    message: "File not found. check the route.",
+                },
+                Command: {
+                    name: "CommandNotFoudException",
+                    message: "This is an unknown command.",
+                },
+            }
+
+            function Exception(type, info) {
+                this.type = exceptionType[type];
+                this.name = this.type.name;
+                this.message = this.type.message;
+                this.alertException = function(){
+                    console.error(`[${this.name}] ${this.message} at ${info}`);
+                };
+            }
+            Exceptions = Exception;
+        }
+
+        this.drawUnitonBody = function(elements){
+            moduleView.drawUnitonBody(elements);
+        }
+
+        this.drawHeadWithValidate = function (heads) {
             moduleView.drawFilteredElementsToHead(heads);
         }
 
         this.drawBodyWithValidate = function (elements) {
-            let filteredElements = elements.filter(elem => elem.innerHTML != '' && elem.innerHTML != undefined && elem.innerHTML.indexOf('CDATA') == -1).map(elem=>{
-                if(elem.tagName == 'SCRIPT'){
+            let filteredElements = elements.filter(elem => elem.nodeValue || elem.innerHTML.indexOf('CDATA') == -1).map(elem => {
+                if (elem.tagName == 'SCRIPT') {
                     let s = document.createElement('script');
-                    if(elem.innerHTML.trim()==''){
-                        elem.src?s.src = elem.src:null;
-                        elem.integrity?s.integrity = elem.integrity:null;
-                        elem.crossOrigin?s.crossOrigin = elem.crossOrigin:null;
+                    if (elem.innerHTML.trim() == '') {
+                        elem.src ? s.src = elem.src : null;
+                        elem.integrity ? s.integrity = elem.integrity : null;
+                        elem.crossOrigin ? s.crossOrigin = elem.crossOrigin : null;
                     } else {
-                        elem.innerHTML?s.innerHTML = elem.innerHTML:null;
+                        elem.innerHTML ? s.innerHTML = elem.innerHTML : null;
                     }
                     return s;
                 } else {
                     return elem;
                 }
             });
-            
+            filteredElements = filteredElements.filter(elem=> {
+                if(elem.nodeValue){
+                    if(elem instanceof Comment){
+                        if(elem.nodeValue.indexOf('live-server')==-1){
+                            return elem;
+                        }
+                    } else {
+                        return elem;
+                    }
+                } else {
+                    return elem;
+                }
+            });
             moduleView.drawFilteredElementsToBody(filteredElements);
         }
     }
@@ -217,24 +342,36 @@ const Uniton = (function () {
             uiElem = ui;
         }
 
+        this.drawUnitonBody = function(elements){
+            uiElem.ubody.innerHTML = '';
+            uiElem.ubody.append(...elements);
+        }
+
         this.drawFilteredElementsToHead = function (elements) {
             uiElem.head.prepend(...elements);
         }
         this.drawFilteredElementsToBody = function (elements) {
             uiElem.body.prepend(...elements);
+            uiElem.ubody = document.querySelector('[data-uniton-type="body"]');
+            uiElem.html.style.display = 'block';
         }
     }
 
     return {
         init: function (options) {
             const html = document.querySelector('html');
+            html.style.display = 'none';
             const head = document.head;
             const body = document.body;
+            const ubody = document.querySelector('[data-uniton-type="body"]');
+            // const anchor = document.querySelectorAll('a[href]');
 
             const ui = {
                 html,
                 head,
                 body,
+                ubody,
+                // anchor,
             };
 
             const view = new View();
