@@ -1,3 +1,6 @@
+![GitHub tag (latest SemVer pre-release)](https://img.shields.io/github/v/tag/devkimson/uniton?include_prereleases&label=release%40latest&sort=semver&style=social)
+![GitHub all releases](https://img.shields.io/github/downloads/devkimson/uniton/total?style=social)
+
 # Uniton
 
 # Purpose
