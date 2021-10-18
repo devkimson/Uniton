@@ -46,7 +46,7 @@ If you want to use it as a cdn, you can copy and use the following.
 
 ```html
 <!-- ... -->
-<script src="https://cdn.jsdelivr.net/devkimson/Uniton@0.1.2/assets/js/uniton.js" integrity="sha384-L+M/ngnqh/5GSv5qOsZ+Uvyr/EzuvygadQMH5cVE70uDq/2zgJu4BhsmbVCaxhOK" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/devkimson/Uniton@0.1.3/assets/js/uniton.js" integrity="sha384-L+M/ngnqh/5GSv5qOsZ+Uvyr/EzuvygadQMH5cVE70uDq/2zgJu4BhsmbVCaxhOK" crossorigin="anonymous"></script>
 <script>
     const uniton = Uniton.init({
         // Into Custom Options...
