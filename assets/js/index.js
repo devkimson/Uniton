@@ -3,6 +3,6 @@ const uniton = Uniton.init({
     apiDataPath: "apiData.json",
     postpath: "_posts",
     unitonTemplate: true,
-    unitonAnchor: false,
+    unitonAnchor: true,
     unitonComponent: true,
 });

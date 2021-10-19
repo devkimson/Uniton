@@ -31,9 +31,9 @@ Implemented if and for statements with html tags, and made it possible to use te
                 // Into Custom Options...
                 apiDataPath: "apiData.json",
                 postpath: "_posts",
-                template: {
-                    privateComponent: true,
-                }
+                unitonTemplate: true,
+                unitonAnchor: false,
+                unitonComponent: true,
             });
         </script>
         <!-- Please write before the end of the body tag -> </body> -->
@@ -46,7 +46,7 @@ If you want to use it as a cdn, you can copy and use the following.
 
 ```html
 <!-- ... -->
-<script src="https://cdn.jsdelivr.net/devkimson/Uniton@0.1.3/assets/js/uniton.js" integrity="sha384-L+M/ngnqh/5GSv5qOsZ+Uvyr/EzuvygadQMH5cVE70uDq/2zgJu4BhsmbVCaxhOK" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/gh/devkimson/Uniton@0.1.3/assets/js/uniton.js" integrity="sha384-DSL8inUZ0ZKd9Mpg9Wj4d8mbXPOfgac7ZR3Qs6U0uzjpoj8VWTMgA8yhypQgCN4W" crossorigin="anonymous"></script></script>
 <script>
     const uniton = Uniton.init({
         // Into Custom Options...
@@ -154,7 +154,7 @@ You must use `${...}` only when using variables in the for statement.
 
 ### Uniton Regex Usage
 
-The 'Uniton' expression is simple. Use as `{# ... #}`. The method is the same as writing JavaScript syntax.
+The 'Uniton' expression is simple. Use as `{# ... #}`. The method is the same as writing JavaScript syntax. To comment, put an exclamation point after the first #. like this `{#! ... #}`. Then it will not be output to the screen. inserts are likewise ignored.
 
 ```html
 <div>
@@ -176,3 +176,57 @@ An `API` variable is created in the global variable. This is possible with `{# .
 
 1. API : Variable with API data set by user
 2. PostList : A variable in which the file read by referring to the path name in the postpath is converted into an object and stored
+
+### Quick use
+
+```javascript
+// index.js
+
+const uniton = Uniton.init({
+    // Into Custom Options...
+    apiDataPath: "apiData.json",
+    postpath: "_posts",
+    // If true, files of the form _templates/layout.html are required.
+    unitonTemplate: true,
+    // If true, files of the form _pages/*.html are required.
+    // And in your layout.html you should have a tag with attribute data-uniton-type="body".
+    unitonAnchor: true,
+    unitonComponent: true,
+});
+```
+
+```html
+<!-- layout.html -->
+<!DOCTYPE html>
+<html lang="{# navigator.language.split('-')[1] #}">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+            integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+        <title>{# API.title #}</title>
+    </head>
+
+    <body>
+
+        {#insert _includes/nav.html#}
+
+        <!-- Module Page -->
+        <div data-uniton-type="body">
+
+        </div>
+        <!-- Module Page -->
+
+        {#insert _includes/footer.html#}
+
+        <!-- Option 1: Bootstrap Bundle with Popper -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous">
+        </script>
+    </body>
+
+</html>
+```
