@@ -95,17 +95,22 @@ const Uniton = (function () {
                 this.changeViewPage(location.pathname);
             } else {
                 let target = ev.target;
+                let link = target.getAttribute("href");
                 ev.preventDefault();
                 if (target.tagName !== 'A' || !target.getAttribute("href")) return;
-                let mappingPath = target.href.split(target.host)[1];
-                window.history.pushState({
-                    data: 1
-                }, '', mappingPath);
-                this.changeViewPage(mappingPath);
+                if(link.match(/http|https/gm)){
+                    open(link, '_blank');
+                } else {
+                    window.history.pushState({
+                        data: 1
+                    }, '', link);
+                    this.changeViewPage(link);
+                }
             }
         }
 
         this.changeViewPage = function (url) {
+            url = url.replace(/\#/gm, '');
             const home = `${API.baseurl}/home`;
             if (url == '/index') url = home;
             if (url == '/home') url = home;
@@ -186,7 +191,7 @@ const Uniton = (function () {
         this.convertHtmlStringToElements = function (htmlString) {
             let dom = new DOMParser();
             let documents = dom.parseFromString(htmlString, "text/html");
-            if (documents.head.children.length == 0) {
+            if (documents.head.childNodes.length == 0) {
                 return documents.body.childNodes;
             } else {
                 return documents.head.childNodes;
@@ -196,17 +201,21 @@ const Uniton = (function () {
         this.unitonParser = function (responseText) {
             let tmp = '';
             tmp = responseText.replace(/\{\#\s*[\s\S]+?\n*\s*\#\}/gim, e => {
-                let commend = e.replace(/\{\#|\#\}/gm, '').trim();
-                if (commend.includes('insert')) {
-                    let documents = this.requestLocalFile(commend.split('insert ')[1]);
-                    return documents.body.innerHTML;
-                } else if (commend.trim() == 'API.url') {
+                let command = e.replace(/\{\#|\#\}/gm, '').trim();
+                if(command.match(/\s*\!\s*/gm)){
+                    return '';
+                }
+                if (command.includes('insert')) {
+                    let documents = this.requestLocalFile(command.split('insert ')[1]);
+                    let htmlString = this.unitonParser(documents.body.innerHTML);
+                    return htmlString;
+                } else if (command.trim() == 'API.url') {
                     if (API.url == "") return location.protocol + '//' + location.host + (API.baseurl != '' ? API.baseurl : '/');
-                    else return this.evl(`${commend}`);
-                } else if (commend.trim() == 'set body') {
+                    else return this.evl(`${command}`);
+                } else if (command.trim() == 'set body') {
                     return `uniton-body`;
                 } else {
-                    return this.evl(`${commend}`);
+                    return this.evl(`${command}`);
                 }
             }) + '\n';
             return tmp;
@@ -323,12 +332,12 @@ const Uniton = (function () {
         }
 
         this.drawBodyWithValidate = function (elements, useTemplate) {
-            let filteredElements = elements.filter(x=>{
-                if(!(x instanceof Text)){
-                    return x;
-                }
-            });
-            filteredElements = filteredElements.filter(elem => elem.nodeValue || elem.innerHTML.indexOf('CDATA') == -1).map(elem => {
+            // elements.filter(x=>{
+            //     if(!(x instanceof Text)){
+            //         return x;
+            //     }
+            // });
+            let filteredElements = elements.filter(elem => elem.nodeValue || elem.innerHTML.indexOf('CDATA') == -1).map(elem => {
                 if (elem.tagName == 'SCRIPT') {
                     let s = document.createElement('script');
                     if (elem.innerHTML.trim() == '') {
@@ -377,12 +386,16 @@ const Uniton = (function () {
         this.drawFilteredElementsToHead = function (elements) {
             uiElem.head.prepend(...elements);
         }
+
         this.drawFilteredElementsToBody = function (elements, useTemplate) {
             uiElem.body.innerHTML = '';
+            let toText = '';
             elements = elements.filter(elem=> {
                 if(elem.tagName=='SCRIPT'){
                     if(!elem.src.match(/index.js|uniton.js/gm)){
                         return elem;
+                    } else {
+                        toText += elem.outerHTML;
                     }
                 } else {
                     return elem;
@@ -392,7 +405,7 @@ const Uniton = (function () {
             if(!useTemplate){
                 uiElem.body.innerHTML += '';
             }
-            
+            uiElem.body.innerHTML += toText;
             uiElem.ubody = document.querySelector('[data-uniton-type="body"]');
             uiElem.html.removeAttribute("style");
         }
