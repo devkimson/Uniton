@@ -111,6 +111,15 @@ const Uniton = (function () {
 
         this.changeViewPage = function (url) {
             url = url.replace(/\#/gm, '');
+            try{
+                if(API.baseurl==undefined){
+                    throw new Error('[ApiDataException] Please check if there is baseurl property of apiData.json.');
+                }
+            } catch(e){
+                console.error(e.message);
+            } finally{
+                API.baseurl = '';
+            }
             const home = `${API.baseurl}/home`;
             if (url == '/index') url = home;
             if (url == '/home') url = home;
