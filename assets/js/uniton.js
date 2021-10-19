@@ -1,6 +1,6 @@
 'use strict';
 /**
- * @version 0.1.0-alpha
+ * @version 0.1.5
  */
 const Uniton = (function () {
     function Controller() {
